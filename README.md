@@ -12,7 +12,7 @@ callback for getting and setting the following characteristics to Homekit:
 # Installation
 
 1. Install homebridge using: `npm install -g homebridge`
-2. Install homebridge-http using: `npm install -g homebridge-http-rgb`
+2. (Temporarily) Install homebridge-http from this repo from **one directory up** : `npm install -g homebridge-http-rgb/`
 3. Update your configuration file.  See below for examples.
 
 
@@ -132,3 +132,9 @@ grunt test
 grunt lint
 ```
 
+# Common Issues
+This package, and homebridge in general, require Avahi. If you see any issues regarding mdns installation on Linux, please make sure you have `lilavahi` installed. It may take a `sudo apt-get update` to pull the package.
+```
+sudo apt-get update
+sudo apt-get install libavahi-compat-libdnssd-dev
+```
