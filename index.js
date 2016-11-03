@@ -1,3 +1,10 @@
+/**
+ * TODO: (1) Add callbacks from _debounceRGB() to array & call all of them
+ * when http request finishes
+ * (2) Look in to Homebridge becoming unresponsive (maybe related to bad
+ * callback calls - ie. line 243)
+ */
+
 var Service, Characteristic;
 var request = require('request'),
     chroma = require('chroma-js'),
