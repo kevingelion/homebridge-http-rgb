@@ -23,7 +23,7 @@ module.exports = function(config) {
         /*
         */
         registerAccessory: function(pluginName, accessoryName, constructor) {
-            this.accessory = new constructor(noop, config);
+            this.accessory = new constructor(noop, config, true);
         }
     };
 };

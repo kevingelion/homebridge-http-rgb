@@ -83,15 +83,15 @@ describe("HTTP-RGB Accessory", function() {
         });
 
         it("setBrightness: 100", function(done) {
-            my.setBrightness(100, function(err, val) { expect(err).to.equal(undefined); expect(val).to.equal(100); done(); }, true);
+            my.setBrightness(100, function(err, val) { expect(err).to.equal(undefined); expect(val).to.equal(100); done(); });
         });
 
         it("setSaturation: 100", function(done) {
-            my.setSaturation(100, function(err, val) { expect(err).to.equal(undefined); expect(val).to.equal(100); done(); }, true);
+            my.setSaturation(100, function(err, val) { expect(err).to.equal(undefined); expect(val).to.equal(100); done(); });
         });
 
         it("setHue: 180", function(done) {
-            my.setHue(180, function(err, val) { expect(err).to.equal(undefined); expect(val).to.equal(180); done(); }, true);
+            my.setHue(180, function(err, val) { expect(err).to.equal(undefined); expect(val).to.equal(180); done(); });
         });
 
         it("getBrightness: 100", function(done) {

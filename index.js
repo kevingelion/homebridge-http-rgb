@@ -29,7 +29,7 @@ module.exports = function(homebridge){
  * @param {function} log Logging function
  * @param {object} config Your configuration object
  */
-function HTTP_RGB(log, config) {
+function HTTP_RGB(log, config, insideTest) {
 
     // The logging function is required if you want your function to output
     // any information to the console in a controlled and organized manner.
@@ -38,6 +38,7 @@ function HTTP_RGB(log, config) {
     this.service     = 'Light';
     this.name        = config.name;
     this.duration    = config.duration || 1000;
+    this.insideTest  = insideTest;
 
     this.username    = config.username || '';
     this.password    = config.password || '';
@@ -223,7 +224,7 @@ HTTP_RGB.prototype = {
      *
      * @param {function} callback The callback that handles the response.
      */
-    setBrightness: function(level, callback, test) {
+    setBrightness: function(level, callback) {
         if (!this.has.brightness) {
             this.log.warn("Ignoring request; No 'brightness' defined.");
             callback(new Error("No 'brightness' defined in configuration"));
@@ -245,8 +246,8 @@ HTTP_RGB.prototype = {
                 }
             }.bind(this));
         } else {
-            if (test) {
-              callback(undefined, this._setRGB(true, "brightness"));
+            if (this.insideTest) {
+              callback(undefined, this._setRGB("brightness"));
             } else {
               this._debounceRGB();
               callback();
@@ -289,7 +290,7 @@ HTTP_RGB.prototype = {
      *
      * @param {function} callback The callback that handles the response.
      */
-    setHue: function(level, callback, test) {
+    setHue: function(level, callback) {
         if (this.color && typeof this.color.url !== 'string') {
             this.log.warn("Ignoring request; problem with 'color' variables.");
             callback(new Error("There was a problem parsing the 'color' section of your configuration."));
@@ -298,8 +299,8 @@ HTTP_RGB.prototype = {
         this.log('Caching Hue as %s ...', level);
         this.cache.hue = level;
 
-        if (test) {
-          callback(undefined, this._setRGB(true, "hue"));
+        if (this.insideTest) {
+          callback(undefined, this._setRGB("hue"));
         } else {
           this._debounceRGB();
           callback();
@@ -342,7 +343,7 @@ HTTP_RGB.prototype = {
      * @param {number} level The saturation of the new call.
      * @param {function} callback The callback that handles the response.
      */
-    setSaturation: function(level, callback, test) {
+    setSaturation: function(level, callback) {
         if (this.color && typeof this.color.url !== 'string') {
             this.log.warn("Ignoring request; problem with 'color' variables.");
             callback(new Error("There was a problem parsing the 'color' section of your configuration."));
@@ -351,8 +352,8 @@ HTTP_RGB.prototype = {
         this.log('Caching Saturation as %s ...', level);
         this.cache.saturation = level;
 
-        if (test) {
-          callback(undefined, this._setRGB(true, "saturation"));
+        if (this.insideTest) {
+          callback(undefined, this._setRGB("saturation"));
         } else {
           this._debounceRGB();
           callback();
@@ -364,7 +365,7 @@ HTTP_RGB.prototype = {
      *
      * @param {function} callback The callback that handles the response.
      */
-    _setRGB: function(test, type) {
+    _setRGB: function(type) {
         var hex = chroma(this.cache.hue, this.cache.saturation / 100, this.cache.brightness / 100, 'hsv').hex().replace('#', '');
         this.log('_setRGB converting H:%s S:%s B:%s to RGB:%s ...', this.cache.hue, this.cache.saturation, this.cache.brightness, hex);
 
@@ -379,7 +380,7 @@ HTTP_RGB.prototype = {
         }.bind(this));
 
         // When running tests, this function should return cached values
-        if (test) {
+        if (this.insideTest) {
             var result;
             switch (type) {
                 case "hue":
