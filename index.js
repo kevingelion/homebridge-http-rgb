@@ -37,6 +37,7 @@ function HTTP_RGB(log, config) {
 
     this.service     = 'Light';
     this.name        = config.name;
+    this.duration    = config.duration || 1000;
 
     this.username    = config.username || '';
     this.password    = config.password || '';
@@ -175,7 +176,7 @@ HTTP_RGB.prototype = {
             return;
         }
 
-        var body = { "value": state ? "on" : "off" };
+        var body = { "value": state ? "on" : "off", "duration": this.duration };
 
         this._httpRequest(this.switch.url, body, "POST", function(error, response, responseBody) {
             if (error) {
@@ -232,7 +233,7 @@ HTTP_RGB.prototype = {
 
         // If achromatic, then update brightness, otherwise, update HSL as RGB
         if (!this.color) {
-            var body = { "value": level };
+            var body = { "value": level, "duration": this.duration };
 
             this._httpRequest(this.brightness.url, body, "POST", function(error, response, body) {
                 if (error) {
@@ -367,7 +368,7 @@ HTTP_RGB.prototype = {
         var hex = chroma(this.cache.hue, this.cache.saturation / 100, this.cache.brightness / 100, 'hsv').hex().replace('#', '');
         this.log('_setRGB converting H:%s S:%s B:%s to RGB:%s ...', this.cache.hue, this.cache.saturation, this.cache.brightness, hex);
 
-        var body = { "value": hex };
+        var body = { "value": hex, "duration": this.duration };
 
         this._httpRequest(this.color.url, body, "POST", function(error, response, body) {
             if (error) {

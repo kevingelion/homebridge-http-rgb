@@ -17,6 +17,14 @@ callback for getting and setting the following characteristics to Homekit:
 
 
 # Configuration
+### Required Parameters
+* `accessory` `{string}` - should **always** be equal to `HTTP-RGB`
+* `name` `{string}` - name of the accessory; can be any string
+
+Based on your accessory, a `switch`, `brightness`, and `color` object will be required with a `url` value for where to send the data. Look at the examples below to see how to accommodate your accessory.
+
+### Optional Parameters
+* `duration` `{integer}` - default: `1000` - number of milliseconds to fade the LEDs over (sent in post request to web server)
 
 ## Examples
 
@@ -25,7 +33,8 @@ callback for getting and setting the following characteristics to Homekit:
     "accessories": [
         {
             "accessory": "HTTP-RGB",
-            "name": "RGB Led Strip",
+            "name": "RGB Led",
+            "duration": 750,
 
             "switch": {
                 "url": "http://localhost/api/v1/status"
@@ -77,7 +86,7 @@ callback for getting and setting the following characteristics to Homekit:
     "accessories": [
         {
             "accessory": "HTTP-RGB",
-            "name": "Single Color Light",
+            "name": "RGB Led",
 
             "switch": {
                 "url": "http://localhost/api/v1/status"
