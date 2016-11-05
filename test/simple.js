@@ -61,11 +61,11 @@ describe("HTTP-RGB Accessory", function() {
         });
 
         it("setPowerState: true", function(done) {
-            my.setPowerState(true, function(err, val) { expect(err).to.equal(undefined); expect(val.toString()).to.equal("1"); done(); });
+            my.setPowerState(true, function(err, val) { expect(err).to.equal(null); expect(val.toString()).to.equal("1"); done(); });
         });
 
         it("setPowerState: false", function(done) {
-            my.setPowerState(false, function(err, val) { expect(err).to.equal(undefined); expect(val.toString()).to.equal("0"); done(); });
+            my.setPowerState(false, function(err, val) { expect(err).to.equal(null); expect(val.toString()).to.equal("0"); done(); });
         });
     });
 
@@ -83,15 +83,15 @@ describe("HTTP-RGB Accessory", function() {
         });
 
         it("setBrightness: 100", function(done) {
-            my.setBrightness(100, function(err, val) { expect(err).to.equal(undefined); expect(val).to.equal(100); done(); });
+            my.setBrightness(100, function(err, val) { expect(err).to.equal(null); expect(val).to.equal(100); done(); });
         });
 
         it("setSaturation: 100", function(done) {
-            my.setSaturation(100, function(err, val) { expect(err).to.equal(undefined); expect(val).to.equal(100); done(); });
+            my.setSaturation(100, function(err, val) { expect(err).to.equal(null); expect(val).to.equal(100); done(); });
         });
 
         it("setHue: 180", function(done) {
-            my.setHue(180, function(err, val) { expect(err).to.equal(undefined); expect(val).to.equal(180); done(); });
+            my.setHue(180, function(err, val) { expect(err).to.equal(null); expect(val).to.equal(180); done(); });
         });
 
         it("getBrightness: 100", function(done) {

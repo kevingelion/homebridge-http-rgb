@@ -43,6 +43,8 @@ function HTTP_RGB(log, config, insideTest) {
     this.username    = config.username || '';
     this.password    = config.password || '';
 
+    this.callbacks   = [];
+
     // Handle the basic on/off
     this.switch = { powerOn: {}, powerOff: {} };
     if (typeof config.switch === 'object') {
@@ -51,24 +53,29 @@ function HTTP_RGB(log, config, insideTest) {
 
     // Local caching of HSB color space for RGB callback
     this.cache = {};
+    this.cache.target = {};
 
     // Handle brightness
     if (typeof config.brightness === 'object') {
-        this.brightness          = {};
-        this.brightness.url      = config.brightness.url;
-        this.cache.brightness    = 0;
+        this.brightness                 = {};
+        this.brightness.url             = config.brightness.url;
+        this.cache.target.brightness    = 0;
+        this.cache.brightness           = 0;
     } else {
-        this.brightness = false;
-        this.cache.brightness = 100;
+        this.brightness                 = false;
+        this.cache.brightness           = 100;
+        this.cache.target.brightness    = 100;
     }
 
     // Color handling
     if (typeof config.color === 'object') {
-        this.color               = {};
-        this.color.url           = config.color.url;
-        this.color.brightness    = config.color.brightness;
-        this.cache.hue           = 0;
-        this.cache.saturation    = 0;
+        this.color                      = {};
+        this.color.url                  = config.color.url;
+        this.color.brightness           = config.color.brightness;
+        this.cache.hue                  = 0;
+        this.cache.saturation           = 0;
+        this.cache.target.hue           = 0;
+        this.cache.target.saturation    = 0;
     } else {
         this.color = false;
     }
@@ -147,6 +154,8 @@ HTTP_RGB.prototype = {
      * @param {function} callback The callback that handles the response.
      */
     getPowerState: function(callback) {
+        this._runCallbacks();
+
         if (!this.switch.url) {
             this.log.warn('Ignoring request, switch.url not defined.');
             callback(new Error('No switch.url url defined.'));
@@ -185,7 +194,7 @@ HTTP_RGB.prototype = {
                 callback(error);
             } else {
                 this.log('setPowerState() successfully set to %s', state ? 'ON' : 'OFF');
-                callback(undefined, responseBody);
+                callback(null);
             }
         }.bind(this));
     },
@@ -196,6 +205,8 @@ HTTP_RGB.prototype = {
      * @param {function} callback The callback that handles the response.
      */
     getBrightness: function(callback) {
+        this._runCallbacks();
+
         if (!this.has.brightness) {
             this.log.warn("Ignoring request; No 'brightness' defined.");
             callback(new Error("No 'brightness' defined in configuration"));
@@ -230,7 +241,7 @@ HTTP_RGB.prototype = {
             callback(new Error("No 'brightness' defined in configuration"));
             return;
         }
-        this.cache.brightness = level;
+        this.cache.target.brightness = level;
 
         // If achromatic, then update brightness, otherwise, update HSL as RGB
         if (!this.color) {
@@ -242,15 +253,15 @@ HTTP_RGB.prototype = {
                     callback(error);
                 } else {
                     this.log('setBrightness() successfully set to %s %', level);
+                    this.cache.brightness = level;
                     callback();
                 }
             }.bind(this));
         } else {
             if (this.insideTest) {
-              callback(undefined, this._setRGB("brightness"));
+              callback(null);
             } else {
-              this._debounceRGB();
-              callback();
+              this._setColor(callback);
             }
         }
     },
@@ -261,6 +272,8 @@ HTTP_RGB.prototype = {
      * @param {function} callback The callback that handles the response.
      */
     getHue: function(callback) {
+        this._runCallbacks();
+
         if (this.color && typeof this.color.url !== 'string') {
             this.log.warn("Ignoring request; problem with 'color' variables.");
             callback(new Error("There was a problem parsing the 'color' section of your configuration."));
@@ -297,13 +310,12 @@ HTTP_RGB.prototype = {
             return;
         }
         this.log('Caching Hue as %s ...', level);
-        this.cache.hue = level;
+        this.cache.target.hue = level;
 
         if (this.insideTest) {
-          callback(undefined, this._setRGB("hue"));
+          callback(null);
         } else {
-          this._debounceRGB();
-          callback();
+          this._setColor(callback);
         }
     },
 
@@ -313,6 +325,8 @@ HTTP_RGB.prototype = {
      * @param {function} callback The callback that handles the response.
      */
     getSaturation: function(callback) {
+        this._runCallbacks();
+
         if (this.color && typeof this.color.url !== 'string') {
             this.log.warn("Ignoring request; problem with 'color' variables.");
             callback(new Error("There was a problem parsing the 'color' section of your configuration."));
@@ -350,52 +364,96 @@ HTTP_RGB.prototype = {
             return;
         }
         this.log('Caching Saturation as %s ...', level);
-        this.cache.saturation = level;
+        this.cache.target.saturation = level;
 
         if (this.insideTest) {
-          callback(undefined, this._setRGB("saturation"));
+          callback(null);
         } else {
-          this._debounceRGB();
-          callback();
+          this._setColor(callback);
         }
+    },
+
+    /**
+     * Tracks callback and calls _debounceRGB()
+     *
+     * @param {function} callback The callback that handles the response.
+     */
+    _setColor: function(callback) {
+        this._runCallbacks();
+        this.callbacks.push(callback);
+        this._debounceRGB();
     },
 
     /**
      * Sets the RGB value of the device based on the cached HSB values.
      *
-     * @param {function} callback The callback that handles the response.
+     * @param {function} type What type of value is getting set. Only used in tests.
      */
     _setRGB: function(type) {
-        var hex = chroma(this.cache.hue, this.cache.saturation / 100, this.cache.brightness / 100, 'hsv').hex().replace('#', '');
-        this.log('_setRGB converting H:%s S:%s B:%s to RGB:%s ...', this.cache.hue, this.cache.saturation, this.cache.brightness, hex);
+        var httpError = null;
+        var hex = chroma(this.cache.target.hue, this.cache.target.saturation / 100, this.cache.target.brightness / 100, 'hsv').hex().replace('#', '');
+        this.log('_setRGB converting H:%s S:%s B:%s to RGB:%s ...', this.cache.target.hue, this.cache.target.saturation, this.cache.target.brightness, hex);
 
         var body = { "value": hex, "duration": this.duration };
 
         this._httpRequest(this.color.url, body, "POST", function(error, response, body) {
-            if (error) {
-                this.log('... _setRGB() failed: %s', error);
-            } else {
+            if (!error && response.statusCode == 200) {
                 this.log('... _setRGB() successfully set to #%s', hex);
+                this._updateCache();
+            } else {
+                httpError = error;
+                this.log('... _setRGB() failed: %s', httpError);
+            }
+
+            // When running tests, this function should return cached values
+            if (this.insideTest) {
+                var result;
+                switch (type) {
+                    case "hue":
+                        result = this.cache.hue;
+                        break;
+                    case "saturation":
+                        result = this.cache.saturation;
+                        break;
+                    default:
+                        result = this.cache.brightness;
+                        break;
+                }
+
+                return result;
+            } else {
+                _.each(this.callbacks, function(callback, index, list) {
+                    if (httpError) {
+                        callback(new Error(httpError.errorno));
+                    } else {
+                        callback(null);
+                    }
+                });
+                this.callbacks = [];
             }
         }.bind(this));
+    },
 
-        // When running tests, this function should return cached values
-        if (this.insideTest) {
-            var result;
-            switch (type) {
-                case "hue":
-                    result = this.cache.hue;
-                    break;
-                case "saturation":
-                    result = this.cache.saturation;
-                    break;
-                default:
-                    result = this.cache.brightness;
-                    break;
-            }
-
-            return result;
+    /**
+     * Runs all callbacks wipes the array
+     */
+    _runCallbacks: function() {
+        if (this.callbacks.length > 0) {
+            _.each(this.callbacks, function(callback, index, list) {
+                callback(null);
+            });
+            this.callbacks = [];
         }
+    },
+
+    /**
+     * Sets saved values to the target. Used for only updating values upon
+     * successful request calls.
+     */
+    _updateCache: function() {
+        this.cache.hue = this.cache.target.hue;
+        this.cache.saturation = this.cache.target.saturation;
+        this.cache.brightness = this.cache.target.brightness;
     },
 
     /** Utility Functions **/
