@@ -169,6 +169,7 @@ HTTP_RGB.prototype = {
                 callback(error);
             } else {
                 var powerOn = parseInt(responseBody) > 0;
+                this.cache.state = powerOn;
                 this.log('power is currently %s', powerOn ? 'ON' : 'OFF');
                 callback(null, powerOn);
             }
@@ -188,6 +189,7 @@ HTTP_RGB.prototype = {
         }
 
         // Don't make call if setting state to current cached state
+        this.log("Current cache power: " + this.cache.state + ", set value: " + state);
         if (this.cache.state === state) {
           callback(null);
           return;
