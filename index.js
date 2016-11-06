@@ -54,6 +54,7 @@ function HTTP_RGB(log, config, insideTest) {
     // Local caching of HSB color space for RGB callback
     this.cache = {};
     this.cache.target = {};
+    this.cache.state = false;
 
     // Handle brightness
     if (typeof config.brightness === 'object') {
@@ -186,6 +187,12 @@ HTTP_RGB.prototype = {
             return;
         }
 
+        // Don't make call if setting state to current cached state
+        if (this.cache.state === state) {
+          callback(null);
+          return;
+        }
+
         var body = { "value": state ? "on" : "off", "duration": this.duration };
 
         this._httpRequest(this.switch.url, body, "POST", function(error, response, responseBody) {
@@ -193,6 +200,7 @@ HTTP_RGB.prototype = {
                 this.log('setPowerState() failed: %s', error.message);
                 callback(error);
             } else {
+                this.cache.state = state;
                 this.log('setPowerState() successfully set to %s', state ? 'ON' : 'OFF');
                 callback(null);
             }
