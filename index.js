@@ -230,8 +230,9 @@ HTTP_RGB.prototype = {
                     callback(error);
                 } else {
                     var level = parseInt(responseBody);
-                    this.log('brightness is currently at %s %', level);
+                    this.log('brightness is currently at %s%', level);
                     this.cache.brightness = level;
+                    this.cache.target.brightness = level;
                     callback(null, level);
                 }
             }.bind(this));
@@ -303,6 +304,7 @@ HTTP_RGB.prototype = {
 
                 this.log('... hue is currently %s', hue);
                 this.cache.hue = hue;
+                this.cache.target.hue = hue;
                 callback(null, hue);
             }
         }.bind(this));
@@ -356,6 +358,7 @@ HTTP_RGB.prototype = {
 
                 this.log('... saturation is currently %s', saturation);
                 this.cache.saturation = saturation;
+                this.cache.target.saturation = saturation;
                 callback(null, saturation);
             }
         }.bind(this));
