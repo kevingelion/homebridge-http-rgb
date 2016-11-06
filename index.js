@@ -190,7 +190,7 @@ HTTP_RGB.prototype = {
 
         // Don't make call if setting state to current cached state
         this.log("Current cache power: " + this.cache.state + ", set value: " + state);
-        if (this.cache.state === state) {
+        if (this.cache.state == state) {
           callback(null);
           return;
         }
